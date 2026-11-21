@@ -1,0 +1,7 @@
+__pycache__
+*.db
+.venv
+.env
+node_modules
+.next
+harbor_eval/results.json
