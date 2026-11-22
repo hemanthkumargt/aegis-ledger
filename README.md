@@ -17,7 +17,7 @@ proves it. Ships with a dark "Risk Command Center" UI.
 ## Project status
 Built as a Forward Deployed AI Solutions Engineer portfolio project. Zero-trust PII handling, human-in-the-loop approval gates and a tamper-evident audit trail for payment disputes.
 Verified offline: unit/integration tests and a Harbor-style evaluation suite using a deterministic `MOCK_LLM=true` mode.
-The live Gemini/Groq paths are implemented through Agno's model classes with 429 failover; they require your own free API keys and are exercised separately from CI.
+Also exercised end-to-end against live Gemini (`gemini-3.5-flash-lite`) for the settle, prompt-injection-reject and approval-hold scenarios; outbound prompts contained only PII tokens. Groq (`openai/gpt-oss-120b`) is the automatic 429 fallback. Live runs need your own free API keys (see `.env.example`). Not yet validated: Docker Compose build, `harbor run` in containers, and the GCP deploy script.
 
 ## Quickstart (offline, no keys, no Docker)
 ```bash
@@ -33,7 +33,7 @@ cp .env.example .env        # add GEMINI_API_KEY / GROQ_API_KEY, set MOCK_LLM=fa
 docker compose up --build   # UI http://localhost:3000, API http://localhost:8000/docs
 ```
 Free keys (no card): [Google AI Studio](https://aistudio.google.com) and [Groq](https://console.groq.com).
-`LLM_PROVIDER=gemini` uses `gemini-2.5-flash-lite` and fails over to Groq `llama-3.3-70b-versatile` on HTTP 429
+`LLM_PROVIDER=gemini` uses `gemini-3.5-flash-lite` and fails over to Groq `openai/gpt-oss-120b` on HTTP 429
 (and vice-versa). Override model ids with `GEMINI_MODEL` / `GROQ_MODEL`. Free-tier quotas change; check the
 provider docs.
 

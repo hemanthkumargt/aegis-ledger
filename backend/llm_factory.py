@@ -1,11 +1,11 @@
-"""Free-tier LLM routing: Gemini Flash-Lite (default) -> Groq Llama 3.3 70B fallback, or a mock."""
+"""Free-tier LLM routing: Gemini Flash-Lite (default) -> Groq gpt-oss-120b fallback, or a mock."""
 from __future__ import annotations
 
 import os
 from typing import Any
 
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
 
 def mock_enabled() -> bool:
