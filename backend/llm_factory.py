@@ -35,9 +35,24 @@ def build_model(provider: str) -> Any:
     raise ValueError(f"unknown provider {provider}")
 
 
+def raise_if_error_content(content: Any) -> Any:
+    """Agno returns provider failures as an error-JSON string in `.content` instead of raising; surface them."""
+    if isinstance(content, str):
+        head = content.lstrip()[:200].lower()
+        if head.startswith("{") and '"error"' in head:
+            raise RuntimeError(content.strip()[:600])
+    return content
+
+
 def is_rate_limit(exc: BaseException) -> bool:
+    """True for errors worth failing over on: HTTP 429 and transient provider overload / 5xx."""
     text = f"{type(exc).__name__} {exc}".lower()
-    return getattr(exc, "status_code", None) == 429 or "429" in text or "rate limit" in text or "resource_exhausted" in text
+    status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if status in (429, 500, 502, 503, 504):
+        return True
+    markers = ("429", "rate limit", "resource_exhausted", "503", "unavailable", "overloaded",
+               "high demand", "502", "504", "timed out", "timeout")
+    return any(m in text for m in markers)
 
 
 def active_engine_label() -> str:

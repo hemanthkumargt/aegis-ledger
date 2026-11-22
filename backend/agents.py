@@ -20,7 +20,7 @@ from sqlalchemy import insert, select, update
 from . import audit
 from .db import accounts, disputes, get_engine, llm_outbound_log, now_iso, transactions
 from .events import bus
-from .llm_factory import active_engine_label, build_model, is_rate_limit, mock_enabled, provider_order
+from .llm_factory import active_engine_label, build_model, is_rate_limit, mock_enabled, provider_order, raise_if_error_content
 from .mcp_ledger import (SMALL_REFUND_LIMIT_CENTS, LedgerError, LedgerServer, PermissionDenied, RateLimitError,
                          call_with_retry, ledger_totals)
 from .pii_vault import PiiVault, contains_raw_pii
@@ -155,12 +155,12 @@ class LLMGateway:
                 t0 = time.perf_counter()
                 result = build_agent(build_model(provider)).run(prompt)
                 self._log(dispute_id, provider, prompt, int((time.perf_counter() - t0) * 1000))
-                return result.content
+                return raise_if_error_content(result.content)
             except Exception as exc:  # noqa: BLE001 - provider SDKs raise many types
                 last = exc
                 if is_rate_limit(exc) and i + 1 < len(provider_order()):
                     metrics.data["provider_fallbacks"] += 1
-                    emit(dispute_id, "llm", "LLMRouter", f"429 from {provider}; failing over to next provider")
+                    emit(dispute_id, "llm", "LLMRouter", f"transient error from {provider} (429/5xx); failing over to next provider")
                     continue
                 raise
         raise RuntimeError(f"all providers failed: {last}")

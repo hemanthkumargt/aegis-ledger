@@ -76,3 +76,18 @@ def test_audit_endpoints_and_sse_headers():
     m = client.get("/metrics").json()
     assert m["pii_redactions"] == 2 and m["engine"].startswith("MOCK")
     assert client.get("/harbor/results").status_code == 200
+
+
+def test_transient_provider_errors_trigger_failover():
+    from backend.llm_factory import is_rate_limit
+    assert is_rate_limit(Exception("429 RESOURCE_EXHAUSTED"))
+    assert is_rate_limit(Exception("503 UNAVAILABLE: model is currently experiencing high demand"))
+    assert not is_rate_limit(ValueError("invalid schema"))
+
+
+def test_swallowed_provider_error_payload_is_raised():
+    import pytest
+    from backend.llm_factory import raise_if_error_content
+    with pytest.raises(RuntimeError):
+        raise_if_error_content('{\n  "error": {"code": 503, "status": "UNAVAILABLE"}\n}')
+    assert raise_if_error_content("plain narrative") == "plain narrative"
