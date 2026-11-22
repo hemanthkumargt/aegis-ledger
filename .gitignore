@@ -5,3 +5,4 @@ __pycache__
 node_modules
 .next
 harbor_eval/results.json
+jobs/
